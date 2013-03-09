@@ -54,15 +54,23 @@ type URLDirectory struct {
 	current   int
 }
 
-func (d URLDirectory) Next() (URLEntry, bool) {
+func (d URLDirectory) Current() (URLEntry, bool) {
 	if len(d.directory) == 0 {
 		return URLEntry{}, false
 	}
 
-	i := d.current
-	d.current = d.current % len(d.directory)
+	return d.directory[d.current], true
+}
 
-	return d.directory[i], true
+func (d *URLDirectory) Next() (URLEntry, bool) {
+	if len(d.directory) == 0 {
+		return URLEntry{}, false
+	}
+
+	// Advance the current index
+	d.current = (d.current + 1) % len(d.directory)
+
+	return d.directory[d.current], true
 }
 
 // Create an URL directory by reading JSON from the provided reader.
@@ -112,6 +120,7 @@ type Hub struct {
 func MakeHub() Hub {
 	return Hub{
 		minions:    make(map[*Minion]bool),
+		directory:  URLDirectory{},
 		broadcast:  make(chan Message, 5),
 		incoming:   make(chan Message, 5),
 		register:   make(chan *Minion),
@@ -188,17 +197,16 @@ func (minion Minion) Send(message Message) {
 }
 
 func (hub *Hub) run() {
-	tickDuration, err := time.ParseDuration("10s")
-	if err != nil {
-		log.Println("Got error while parsing duration", err)
-		return
-	}
-	ticker := time.NewTicker(tickDuration)
+	ticker := time.NewTicker(1 * time.Second)
 	for {
 		select {
 		case minion := <-hub.register:
 			log.Println("Registering websocket connection")
 			hub.Connect(minion)
+			if entry, ok := hub.directory.Current(); ok {
+				message := urlEntry2message(entry)
+				minion.Send(message)
+			}
 		case minion := <-hub.unregister:
 			log.Println("Unregistering minion")
 			delete(hub.minions, minion)
@@ -211,6 +219,10 @@ func (hub *Hub) run() {
 			switch message.Type {
 			case TYPE_RELOAD:
 				hub.ReadDirectoryFromFile(DIRECTORY_FILE)
+			case TYPE_ADD:
+				// Add an URL entry to the directory
+			case TYPE_DELETE:
+				// Delete an URL entry from the directory
 			default:
 				log.Println(message.Type)
 			}
@@ -239,6 +251,8 @@ func (hub *Hub) run() {
 
 func makePusher() (*Hub, func(*websocket.Conn)) {
 	hub := MakeHub()
+	hub.ReadDirectoryFromFile(DIRECTORY_FILE)
+
 	return &hub, func(ws *websocket.Conn) {
 		log.Println("Received incoming websocket connection")
 		minion := MakeMinion(ws)

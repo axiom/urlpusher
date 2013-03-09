@@ -2,7 +2,15 @@
 	"entries": [
 		{
 			"url": "http://duckduckgo.com",
-			"duration": 1000000000
+			"duration": 3000000000
+		},
+		{
+			"url": "http://saturn.lan",
+			"duration": 3000000000
+		},
+		{
+			"url": "http://api.build.lan",
+			"duration": 3000000000
 		}
 	]
 }

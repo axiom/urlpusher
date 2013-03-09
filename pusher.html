@@ -32,8 +32,7 @@
 					var message = JSON.parse(evt.data);
 
 					if (message.type == "url") {
-						$('#current').attr('href', message.payload);
-						$('#current').text(message.payload);
+						$('#current').attr('src', message.payload);
 					}
 				};
 
@@ -53,7 +52,7 @@
 				}
 			});
 		</script>
-		<style>
+		<style type="text/css">
 			body {
 				background: royalblue;
 				color: snow;
@@ -65,11 +64,13 @@
 				color: #333;
 				border: 10px solid gold;
 				padding: 1em;
+				width: 80%;
+				height: 80%;
 			}
 		</style>
 	</head>
 	<body>
 		<h1>URL Pusher Delux</h1>
-		<center><a id="current"></a></center>
+		<center><iframe id="current"></iframe></center>
 	</body>
 </html>
