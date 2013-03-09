@@ -1,11 +1,15 @@
 <!doctype html>
 <html>
 	<head>
-		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+		<title>URL PUSHER</title>
+		<!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script> -->
+		<script src="jquery.min.js"></script>
 		<script type="application/javascript">
 			var sendMessage;
+			var reload;
+			var conn;
 			$(function() {
-				var conn = new WebSocket("ws://192.168.56.101:8080/pusher");
+				conn = new WebSocket("ws://localhost:8080/pusher");
 				console.log(conn);
 
 				conn.onclose = function(evt) {
@@ -13,7 +17,6 @@
 				};
 
 				conn.onopen = function(evt) {
-					conn.send("Ping");
 					console.log("onopen", evt);
 				};
 
@@ -22,16 +25,51 @@
 				};
 
 				conn.onmessage = function(evt) {
-					console.log("onmessage", evt);
+					console.log("onmessage", evt.data, evt);
+					console.log(typeof evt.data);
+					console.log(JSON.parse(evt.data));
+
+					var message = JSON.parse(evt.data);
+
+					if (message.type == "url") {
+						$('#current').attr('href', message.payload);
+						$('#current').text(message.payload);
+					}
 				};
 
-				sendMessage = function(msg) {
-					conn.send(msg);
+				sendMessage = function(type, payload) {
+					console.log("Sending msg", type, payload);
+					conn.send(
+						JSON.stringify({
+							"type": type,
+							"payload": payload
+							}
+						)
+					);
 				};
+
+				reload = function() {
+					sendMessage(1);
+				}
 			});
 		</script>
+		<style>
+			body {
+				background: royalblue;
+				color: snow;
+				font-weight: bold;
+			}
+
+			#current {
+				background: gainsboro;
+				color: #333;
+				border: 10px solid gold;
+				padding: 1em;
+			}
+		</style>
 	</head>
 	<body>
 		<h1>URL Pusher Delux</h1>
+		<center><a id="current"></a></center>
 	</body>
 </html>
