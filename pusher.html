@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+	<head>
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+		<script type="application/javascript">
+			var sendMessage;
+			$(function() {
+				var conn = new WebSocket("ws://192.168.56.101:8080/pusher");
+				console.log(conn);
+
+				conn.onclose = function(evt) {
+					console.log("onclose", evt);
+				};
+
+				conn.onopen = function(evt) {
+					conn.send("Ping");
+					console.log("onopen", evt);
+				};
+
+				conn.onerror = function(evt) {
+					console.log("onerror", evt);
+				};
+
+				conn.onmessage = function(evt) {
+					console.log("onmessage", evt);
+				};
+
+				sendMessage = function(msg) {
+					conn.send(msg);
+				};
+			});
+		</script>
+	</head>
+	<body>
+		<h1>URL Pusher Delux</h1>
+	</body>
+</html>
