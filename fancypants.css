@@ -1,0 +1,26 @@
+body {
+	background: royalblue;
+	color: snow;
+	font-weight: bold;
+}
+
+iframe {
+	background: gainsboro;
+	color: #333;
+	border: 10px solid gold;
+	padding: 1em;
+	width: 30%;
+	height: 80%;
+}
+
+iframe.current {
+	border-color: gold !important;
+}
+
+iframe.next {
+	border-color: #cacaca !important;
+}
+
+iframe.loading {
+	border-color: hotpink !important;
+}

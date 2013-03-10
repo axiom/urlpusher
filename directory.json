@@ -1,15 +1,15 @@
 {
 	"entries": [
 		{
-			"url": "http://duckduckgo.com",
+			"url": "http://localhost:8080",
 			"duration": 3000000000
 		},
 		{
-			"url": "http://saturn.lan",
+			"url": "http://localhost:8080",
 			"duration": 3000000000
 		},
 		{
-			"url": "http://api.build.lan",
+			"url": "http://localhost:8080",
 			"duration": 3000000000
 		}
 	]

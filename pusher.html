@@ -4,73 +4,12 @@
 		<title>URL PUSHER</title>
 		<!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script> -->
 		<script src="jquery.min.js"></script>
-		<script type="application/javascript">
-			var sendMessage;
-			var reload;
-			var conn;
-			$(function() {
-				conn = new WebSocket("ws://localhost:8080/pusher");
-				console.log(conn);
-
-				conn.onclose = function(evt) {
-					console.log("onclose", evt);
-				};
-
-				conn.onopen = function(evt) {
-					console.log("onopen", evt);
-				};
-
-				conn.onerror = function(evt) {
-					console.log("onerror", evt);
-				};
-
-				conn.onmessage = function(evt) {
-					console.log("onmessage", evt.data, evt);
-					console.log(typeof evt.data);
-					console.log(JSON.parse(evt.data));
-
-					var message = JSON.parse(evt.data);
-
-					if (message.type == "url") {
-						$('#current').attr('src', message.payload);
-					}
-				};
-
-				sendMessage = function(type, payload) {
-					console.log("Sending msg", type, payload);
-					conn.send(
-						JSON.stringify({
-							"type": type,
-							"payload": payload
-							}
-						)
-					);
-				};
-
-				reload = function() {
-					sendMessage(1);
-				}
-			});
-		</script>
-		<style type="text/css">
-			body {
-				background: royalblue;
-				color: snow;
-				font-weight: bold;
-			}
-
-			#current {
-				background: gainsboro;
-				color: #333;
-				border: 10px solid gold;
-				padding: 1em;
-				width: 80%;
-				height: 80%;
-			}
-		</style>
+		<script src="pusher.js"></script>
+		<link href="fancypants.css" type="text/css" rel="stylesheet">
 	</head>
 	<body>
 		<h1>URL Pusher Delux</h1>
-		<center><iframe id="current"></iframe></center>
+		<iframe class="current" id="fork"></iframe>
+		<iframe class="next" id="spoon"></iframe>
 	</body>
 </html>
