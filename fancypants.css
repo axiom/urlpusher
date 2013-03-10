@@ -8,17 +8,19 @@ iframe {
 	background: gainsboro;
 	color: #333;
 	border: 10px solid gold;
-	padding: 1em;
-	width: 30%;
-	height: 80%;
+	width: 94%;
+	height: 500px;
+	margin: 0;
 }
 
 iframe.current {
 	border-color: gold !important;
+	display: block;
 }
 
 iframe.next {
 	border-color: #cacaca !important;
+	display: none;
 }
 
 iframe.loading {

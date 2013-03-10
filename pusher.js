@@ -4,6 +4,11 @@ $(function() {
 	conn = new WebSocket("ws://localhost:8080/pusher");
 	var frames = $('iframe');
 
+	frames.on('load', function() {
+		console.log('loaded, will swap');
+		swap();
+	});
+
 	conn.onclose = function(evt) {
 		console.log("onclose", evt);
 	};
@@ -45,15 +50,12 @@ $(function() {
 		next.removeClass('loading');
 		current.removeClass('current'); current.addClass('next');
 		next.removeClass('next'); next.addClass('current');
+		console.log('swapped');
 	}
 
 	function loadURL(url) {
 		var next = nextFrame();
 		next.addClass('loading');
 		next.attr('src', url);
-		next.on('load', function() {
-			console.log('loaded, will swap');
-			swap;
-		});
 	}
 });
