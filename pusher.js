@@ -3,14 +3,22 @@ var conn, sendMessage;
 $(function() {
 	var reconnectTimer;
 	var frames = $('iframe');
+	var osd = $('#osd');
 
 	frames.on('load', function() {
 		console.log('loaded, will swap');
 		swap();
 	});
 
+	function osdText(text) {
+		osd.innerHTML = text;
+		osd.show();
+		osd.fitText(1.2, {maxFontSize: '200px', minFontSize: '28px'});
+	}
+
 	function connect() {
-		conn = new WebSocket("ws://localhost:8080/pusher");
+		var host = 'ws://' + window.location.host + window.location.pathname + 'pusher';
+		conn = new WebSocket(host);
 
 		conn.onclose = function(evt) {
 			console.log("onclose", evt);
@@ -37,8 +45,13 @@ $(function() {
 			console.log("onmessage", evt);
 
 			var message = JSON.parse(evt.data);
+
 			if (message.type == "url") {
 				loadURL(message.payload);
+				osdText('connected');
+			} else if (message.type == "reload") {
+				var currentLocation = window.location;
+				window.location = currentLocation;
 			}
 		};
 	}

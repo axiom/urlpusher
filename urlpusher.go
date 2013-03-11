@@ -15,7 +15,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"text/template"
 	"time"
 )
 
@@ -103,7 +102,7 @@ func MakeMinion(ws *websocket.Conn) Minion {
 	return Minion{
 		websocket: ws,
 		done:      make(chan bool),
-		outgoing:  make(chan Message, 5),
+		outgoing:  make(chan Message, 1),
 	}
 }
 
@@ -121,8 +120,8 @@ func MakeHub() Hub {
 	return Hub{
 		minions:    make(map[*Minion]bool),
 		directory:  URLDirectory{},
-		broadcast:  make(chan Message, 5),
-		incoming:   make(chan Message, 5),
+		broadcast:  make(chan Message, 1),
+		incoming:   make(chan Message, 1),
 		register:   make(chan *Minion),
 		unregister: make(chan *Minion),
 		done:       make(chan bool),
@@ -221,6 +220,13 @@ func (hub *Hub) run() {
 				hub.ReadDirectoryFromFile(DIRECTORY_FILE)
 			case TYPE_ADD:
 				// Add an URL entry to the directory
+				duration := 3 * time.Second
+				urlEntry := URLEntry{
+					URL: message.Payload,
+					Duration: duration,
+				}
+				hub.directory.directory = append(hub.directory.directory, urlEntry)
+				log.Println("Adding URL to directory:", urlEntry)
 			case TYPE_DELETE:
 				// Delete an URL entry from the directory
 			default:
@@ -267,12 +273,6 @@ func makePusher() (*Hub, func(*websocket.Conn)) {
 	}
 }
 
-func htmlHandler(c http.ResponseWriter, req *http.Request) {
-	htmlTemplate.Execute(c, req.Host)
-}
-
-var htmlTemplate = template.Must(template.ParseFiles("pusher.html"))
-
 func main() {
 	hub, pusherHandle := makePusher()
 
@@ -286,5 +286,5 @@ func main() {
 	http.Handle("/", http.FileServer(http.Dir(".")))
 
 	log.Println("Starting server")
-	log.Fatal(http.ListenAndServe("0.0.0.0:8080", nil))
+	log.Fatal(http.ListenAndServe("0.0.0.0:8012", nil))
 }

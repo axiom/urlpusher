@@ -1,16 +1,16 @@
 {
 	"entries": [
 		{
-			"url": "http://skife.org/images/2011-03-08-gnuplot-graph-logscale.png",
-			"duration": 3000000000
+			"url": "http://time.is/just",
+			"duration": 10000000000
 		},
 		{
-			"url": "http://2.bp.blogspot.com/_bvbnGKTEw1Y/TIKnA1Z6K0I/AAAAAAAAAQo/QAgXVZOsn3s/s1600/mem-2334-graph.png",
-			"duration": 3000000000
+			"url": "http://api.build.lan/jenkins/job/Duego%20API/buildTimeGraph/png?width=1920&height=1080",
+			"duration": 10000000000
 		},
 		{
-			"url": "http://www.nigelpond.com/images/p16.png",
-			"duration": 3000000000
+			"url": "http://api.build.lan/jenkins/job/Duego%20API/test/trend?failureOnly=false&width=1920&height=1080",
+			"duration": 10000000000
 		}
 	]
 }
