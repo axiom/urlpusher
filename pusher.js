@@ -1,7 +1,7 @@
 var conn, sendMessage;
 
 $(function() {
-	conn = new WebSocket("ws://localhost:8080/pusher");
+	var reconnectTimer;
 	var frames = $('iframe');
 
 	frames.on('load', function() {
@@ -9,26 +9,39 @@ $(function() {
 		swap();
 	});
 
-	conn.onclose = function(evt) {
-		console.log("onclose", evt);
-	};
+	function connect() {
+		conn = new WebSocket("ws://localhost:8080/pusher");
 
-	conn.onopen = function(evt) {
-		console.log("onopen", evt);
-	};
+		conn.onclose = function(evt) {
+			console.log("onclose", evt);
 
-	conn.onerror = function(evt) {
-		console.log("onerror", evt);
-	};
+			// Set a reconnect timer...
+			if (reconnectTimer) {
+				window.clearInterval(reconnectTimer);
+			}
 
-	conn.onmessage = function(evt) {
-		console.log("onmessage", evt);
+			reconnectTimer = window.setInterval(function() {
+				connect();
+			}, 1000);
+		};
 
-		var message = JSON.parse(evt.data);
-		if (message.type == "url") {
-			loadURL(message.payload);
-		}
-	};
+		conn.onopen = function(evt) {
+			console.log("onopen", evt);
+		};
+
+		conn.onerror = function(evt) {
+			console.log("onerror", evt);
+		};
+
+		conn.onmessage = function(evt) {
+			console.log("onmessage", evt);
+
+			var message = JSON.parse(evt.data);
+			if (message.type == "url") {
+				loadURL(message.payload);
+			}
+		};
+	}
 
 	sendMessage = function(type, payload) {
 		console.log("Sending msg", type, payload);
@@ -58,4 +71,6 @@ $(function() {
 		next.addClass('loading');
 		next.attr('src', url);
 	}
+
+	connect();
 });
