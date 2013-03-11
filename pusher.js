@@ -1,23 +1,25 @@
 var conn, sendMessage;
 
 $(function() {
-	var reconnectTimer;
 	var frames = $('iframe');
 	var osd = $('#osd');
 
 	frames.on('load', function() {
 		console.log('loaded, will swap');
-		swap();
+		if (this.src) {
+			swap();
+		}
 	});
 
 	function osdText(text) {
-		osd.innerHTML = text;
-		osd.show();
+		osd.html(text).show();
 		osd.fitText(1.2, {maxFontSize: '200px', minFontSize: '28px'});
 	}
 
 	function connect() {
-		var host = 'ws://' + window.location.host + window.location.pathname + 'pusher';
+		var reconnectTimer;
+		var host = 'ws://' + window.location.host + window.location.pathname.replace(/\/[^\/]+$/, '/') + 'pusher';
+
 		conn = new WebSocket(host);
 
 		conn.onclose = function(evt) {
@@ -25,12 +27,10 @@ $(function() {
 
 			// Set a reconnect timer...
 			if (reconnectTimer) {
-				window.clearInterval(reconnectTimer);
+				clearTimeout(reconnectTimer);
 			}
 
-			reconnectTimer = window.setInterval(function() {
-				connect();
-			}, 1000);
+			reconnectTimer = setTimeout(connect, 3000);
 		};
 
 		conn.onopen = function(evt) {
