@@ -218,6 +218,7 @@ func (hub *Hub) run() {
 			switch message.Type {
 			case TYPE_RELOAD:
 				hub.ReadDirectoryFromFile(DIRECTORY_FILE)
+				hub.Broadcast(Message{Type: TYPE_RELOAD})
 			case TYPE_ADD:
 				// Add an URL entry to the directory
 				duration := 3 * time.Second
