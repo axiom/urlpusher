@@ -41,7 +41,7 @@ $(function() {
 		};
 
 		conn.onmessage = function(evt) {
-			console.log("onmessage", evt);
+			console.log("onmessage", evt.data);
 
 			var message = JSON.parse(evt.data);
 
