@@ -5,7 +5,6 @@ $(function() {
 	var osd = $('#osd');
 
 	frames.on('load', function() {
-		console.log('loaded, will swap');
 		if (this.src) {
 			swap();
 		}
@@ -50,6 +49,9 @@ $(function() {
 				loadURL(message.payload);
 				osdText('connected');
 			} else if (message.type == "reload") {
+				if (conn) {
+					conn.close();
+				}
 				var currentLocation = window.location;
 				window.location = currentLocation;
 			}
@@ -57,7 +59,6 @@ $(function() {
 	}
 
 	sendMessage = function(type, payload) {
-		console.log("Sending msg", type, payload);
 		conn.send(JSON.stringify({ "type": type, "payload": payload }));
 	};
 
@@ -76,7 +77,6 @@ $(function() {
 		next.removeClass('loading');
 		current.removeClass('current'); current.addClass('next');
 		next.removeClass('next'); next.addClass('current');
-		console.log('swapped');
 	}
 
 	function loadURL(url) {

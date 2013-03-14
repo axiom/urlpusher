@@ -1,6 +1,6 @@
 /*
-This package implements a server that will push URL to clients connected via
-WebSockets.
+Package urlpusher implements a server that will push URLs to clients connected
+via WebSockets.
 
 It's intended to be used to control several big screens used for monitoring
 purposes. The server will push out different URL to various statistics, or
@@ -11,6 +11,8 @@ package main
 import (
 	"code.google.com/p/go.net/websocket"
 	"encoding/json"
+	"flag"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -25,8 +27,6 @@ const (
 	TYPE_RELOAD = "reload"
 	TYPE_ADD    = "add"
 	TYPE_DELETE = "delete"
-
-	DIRECTORY_FILE = "directory.json"
 )
 
 type Message struct {
@@ -80,7 +80,7 @@ func ReadDirectory(r io.Reader) (URLDirectory, error) {
 	// a list of URL entries.
 	var entries urlEntries
 	if err := decoder.Decode(&entries); err != nil {
-		log.Fatal("Could not read JSON", err)
+		log.Fatal("Could not decode entries in dictionary file", err)
 	}
 
 	return URLDirectory{
@@ -106,7 +106,13 @@ func MakeMinion(ws *websocket.Conn) Minion {
 	}
 }
 
-type Hub struct {
+type Hubber interface {
+	Register(*Minion)
+	Unregister(*Minion)
+	Broadcast(Message)
+}
+
+type hub struct {
 	minions    map[*Minion]bool
 	directory  URLDirectory
 	broadcast  chan Message
@@ -116,8 +122,8 @@ type Hub struct {
 	done       chan bool
 }
 
-func MakeHub() Hub {
-	return Hub{
+func MakeHub() hub {
+	return hub{
 		minions:    make(map[*Minion]bool),
 		directory:  URLDirectory{},
 		broadcast:  make(chan Message, 1),
@@ -128,28 +134,27 @@ func MakeHub() Hub {
 	}
 }
 
-func (h *Hub) Connect(minion *Minion) {
+func (h *hub) Register(minion *Minion) {
+	// Add the minion to the hub
 	h.minions[minion] = true
-	log.Println("Added minion to hub")
 
-	// Reader
-	go func(hub *Hub, minion *Minion) {
+	// Setup an asynchronous reader that will put incoming messages into
+	// the hub's incoming chan.
+	go func(hub *hub, minion *Minion) {
 		for {
-			log.Println("Waiting for incoming websocket message")
 			var message Message
 			err := websocket.JSON.Receive(minion.websocket, &message)
 			if err != nil {
 				log.Println("Got bad incoming websocket message", err)
 				break
 			}
-			log.Println("Putting incoming websocket message on incoming chan")
 			h.incoming <- message
 		}
 	}(h, minion)
 
-	// Writer
-	go func(hub *Hub, minion *Minion) {
-		log.Println("Waiting for outgoing websocket message")
+	// Setup an asynchronous writer that will receive messages on the
+	// hub's broadcast chan, and send them to all the registered minions.
+	go func(hub *hub, minion *Minion) {
 		for message := range minion.outgoing {
 			err := websocket.JSON.Send(minion.websocket, message)
 			if err != nil {
@@ -160,16 +165,18 @@ func (h *Hub) Connect(minion *Minion) {
 	}(h, minion)
 }
 
-func (h *Hub) Disconnect(minion *Minion) {
+func (h *hub) Unregister(minion *Minion) {
+	delete(h.minions, minion)
+	close(minion.outgoing)
 }
 
-func (h Hub) Broadcast(m Message) {
+func (h hub) Broadcast(m Message) {
 	for minion, _ := range h.minions {
 		minion.Send(m)
 	}
 }
 
-func (hub *Hub) ReadDirectoryFromFile(filename string) (err error) {
+func (hub *hub) ReadDirectoryFromFile(filename string) (err error) {
 	file, err := os.Open("directory.json")
 	if err != nil {
 		log.Println("Could not open directory file for reading")
@@ -195,29 +202,28 @@ func (minion Minion) Send(message Message) {
 	}
 }
 
-func (hub *Hub) run() {
+func (hub *hub) run() {
 	ticker := time.NewTicker(1 * time.Second)
 	for {
 		select {
 		case minion := <-hub.register:
-			log.Println("Registering websocket connection")
-			hub.Connect(minion)
+			log.Println("Registering minion")
+			hub.Register(minion)
 			if entry, ok := hub.directory.Current(); ok {
 				message := urlEntry2message(entry)
 				minion.Send(message)
 			}
 		case minion := <-hub.unregister:
 			log.Println("Unregistering minion")
-			delete(hub.minions, minion)
-			close(minion.outgoing)
+			hub.Unregister(minion)
 		case message := <-hub.broadcast:
-			log.Println("Broadcasting message", message)
+			log.Println("->", message)
 			hub.Broadcast(message)
 		case message := <-hub.incoming:
-			log.Println("Got incoming message", message)
+			log.Println("<-", message)
 			switch message.Type {
 			case TYPE_RELOAD:
-				hub.ReadDirectoryFromFile(DIRECTORY_FILE)
+				hub.ReadDirectoryFromFile(*directoryFile)
 				hub.Broadcast(Message{Type: TYPE_RELOAD})
 			case TYPE_ADD:
 				// Add an URL entry to the directory
@@ -231,14 +237,12 @@ func (hub *Hub) run() {
 			case TYPE_DELETE:
 				// Delete an URL entry from the directory
 			default:
-				log.Println(message.Type)
+				log.Println("Got unknown message type: ", message.Type)
 			}
 
 		// The ticker takes care of broadcasting the next URL in a
 		// timely fashion.
 		case <-ticker.C:
-			log.Println("Ticker")
-
 			// Create a message from an URL entry
 			if entry, ok := hub.directory.Next(); ok {
 				message := urlEntry2message(entry)
@@ -252,16 +256,11 @@ func (hub *Hub) run() {
 	ticker.Stop()
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Websocet stuffs
-////////////////////////////////////////////////////////////////////////////////
-
-func makePusher() (*Hub, func(*websocket.Conn)) {
+func makePusher() (*hub, func(*websocket.Conn)) {
 	hub := MakeHub()
-	hub.ReadDirectoryFromFile(DIRECTORY_FILE)
+	hub.ReadDirectoryFromFile(*directoryFile)
 
 	return &hub, func(ws *websocket.Conn) {
-		log.Println("Received incoming websocket connection")
 		minion := MakeMinion(ws)
 		hub.register <- &minion
 		defer func() {
@@ -274,18 +273,24 @@ func makePusher() (*Hub, func(*websocket.Conn)) {
 	}
 }
 
+var (
+	port = flag.Int("port", 8012, "Port to listen on")
+	host = flag.String("host", "0.0.0.0", "Host to bind to")
+	directoryFile = flag.String("directory", "directory.json", "File to read URL entries from")
+)
+
 func main() {
-	hub, pusherHandle := makePusher()
+	flag.Parse()
 
-	go func(hub *Hub) {
-		log.Println("Starting run loop in go routine")
-		hub.run()
-	}(hub)
+	hubert, pusherHandle := makePusher()
 
-	log.Println("Setting up handlers")
+	go func(hubert *hub) {
+		hubert.run()
+	}(hubert)
+
 	http.Handle("/pusher", websocket.Handler(pusherHandle))
 	http.Handle("/", http.FileServer(http.Dir(".")))
 
-	log.Println("Starting server")
-	log.Fatal(http.ListenAndServe("0.0.0.0:8012", nil))
+	log.Printf("Listening on %v:%v\n", *host, *port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%v:%v", *host, *port), nil))
 }
