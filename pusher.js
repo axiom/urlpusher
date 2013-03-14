@@ -1,4 +1,4 @@
-var conn, sendMessage;
+var conn, sendMessage, osdText;
 
 $(function() {
 	var frames = $('iframe');
@@ -10,9 +10,10 @@ $(function() {
 		}
 	});
 
-	function osdText(text) {
+	osdText = function(text) {
 		osd.html(text).show();
-		osd.fitText(1.2, {maxFontSize: '200px', minFontSize: '28px'});
+		osd.fitText(0.8, {maxFontSize: '500px', minFontSize: '28px'});
+		osd.delay(1000).fadeOut();
 	}
 
 	function connect() {
@@ -23,6 +24,7 @@ $(function() {
 
 		conn.onclose = function(evt) {
 			console.log("onclose", evt);
+			osdText('disconnected');
 
 			// Set a reconnect timer...
 			if (reconnectTimer) {
@@ -34,10 +36,12 @@ $(function() {
 
 		conn.onopen = function(evt) {
 			console.log("onopen", evt);
+			osdText('connected');
 		};
 
 		conn.onerror = function(evt) {
 			console.log("onerror", evt);
+			osdText('error');
 		};
 
 		conn.onmessage = function(evt) {
@@ -47,7 +51,6 @@ $(function() {
 
 			if (message.type == "url") {
 				loadURL(message.payload);
-				osdText('connected');
 			} else if (message.type == "reload") {
 				if (conn) {
 					conn.close();
