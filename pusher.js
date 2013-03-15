@@ -2,7 +2,9 @@ var conn, sendMessage, osdText;
 
 $(function() {
 	var frames = $('iframe');
-	var osd = $('#osd');
+	var osd = $('#osd > div');
+	var osdTimer;
+	osd.parent().hide();
 
 	frames.on('load', function() {
 		if (this.src) {
@@ -10,10 +12,17 @@ $(function() {
 		}
 	});
 
-	osdText = function(text) {
-		osd.html(text).show();
-		osd.fitText(0.8, {maxFontSize: '500px', minFontSize: '28px'});
-		osd.delay(5000).fadeOut();
+	osdText = function(text, delay) {
+		if (osdTimer) {
+			clearTimeout(osdTimer);
+		}
+
+		osd.html(text).parent().show();
+		osd.fitText(0.8);
+
+		osdTimer = setTimeout(function() {
+			osd.parent().fadeOut();
+		}, delay || 5000);
 	}
 
 	function connect() {

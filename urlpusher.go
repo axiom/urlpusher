@@ -225,6 +225,7 @@ func (hub *hub) run() {
 			switch message.Type {
 			case TYPE_RELOAD:
 				hub.ReadDirectoryFromFile(*directoryFile)
+				hub.Broadcast(Message{Type: TYPE_TEXT, Payload: "reloading"})
 				hub.Broadcast(Message{Type: TYPE_RELOAD})
 			case TYPE_ADD:
 				// Add an URL entry to the directory
