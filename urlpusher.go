@@ -26,6 +26,7 @@ const (
 	TYPE_URL    = "url"
 	TYPE_RELOAD = "reload"
 	TYPE_ADD    = "add"
+	TYPE_TEXT   = "text"
 	TYPE_DELETE = "delete"
 )
 
@@ -229,13 +230,15 @@ func (hub *hub) run() {
 				// Add an URL entry to the directory
 				duration := 3 * time.Second
 				urlEntry := URLEntry{
-					URL: message.Payload,
+					URL:      message.Payload,
 					Duration: duration,
 				}
 				hub.directory.directory = append(hub.directory.directory, urlEntry)
 				log.Println("Adding URL to directory:", urlEntry)
 			case TYPE_DELETE:
 				// Delete an URL entry from the directory
+			case TYPE_TEXT:
+				hub.Broadcast(message)
 			default:
 				log.Println("Got unknown message type: ", message.Type)
 			}
@@ -274,8 +277,8 @@ func makePusher() (*hub, func(*websocket.Conn)) {
 }
 
 var (
-	port = flag.Int("port", 8012, "Port to listen on")
-	host = flag.String("host", "0.0.0.0", "Host to bind to")
+	port          = flag.Int("port", 8012, "Port to listen on")
+	host          = flag.String("host", "0.0.0.0", "Host to bind to")
 	directoryFile = flag.String("directory", "directory.json", "File to read URL entries from")
 )
 

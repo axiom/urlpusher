@@ -13,7 +13,7 @@ $(function() {
 	osdText = function(text) {
 		osd.html(text).show();
 		osd.fitText(0.8, {maxFontSize: '500px', minFontSize: '28px'});
-		osd.delay(1000).fadeOut();
+		osd.delay(5000).fadeOut();
 	}
 
 	function connect() {
@@ -51,6 +51,8 @@ $(function() {
 
 			if (message.type == "url") {
 				loadURL(message.payload);
+			} else if (message.type == "text") {
+				osdText(message.payload);
 			} else if (message.type == "reload") {
 				if (conn) {
 					conn.close();
