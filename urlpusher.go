@@ -24,6 +24,7 @@ type Type string
 
 const (
 	TYPE_URL    = "url"
+	TYPE_IMG    = "img"
 	TYPE_RELOAD = "reload"
 	TYPE_ADD    = "add"
 	TYPE_TEXT   = "text"
@@ -39,6 +40,7 @@ type Message struct {
 // should be shown on the screen (i.e. until the next URL will be pushed).
 type URLEntry struct {
 	URL      string        `json:"url"`
+	Type     Type          `json:"type"`
 	Duration time.Duration `json:"duration"`
 }
 
@@ -90,7 +92,7 @@ func ReadDirectory(r io.Reader) (URLDirectory, error) {
 }
 
 func urlEntry2message(entry URLEntry) Message {
-	return Message{Type: TYPE_URL, Payload: entry.URL}
+	return Message{Type: entry.Type, Payload: entry.URL}
 }
 
 type Minion struct {
