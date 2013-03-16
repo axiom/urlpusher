@@ -2,13 +2,25 @@ var conn, sendMessage, osdText;
 
 $(function() {
 	var frames = $('iframe');
+	var currentFrame = 0;
+	var imgHolders = $('.imgholder > img');
+	var currentHolder = 0;
 	var osd = $('#osd > div');
 	var osdTimer;
+
 	osd.parent().hide();
+	frames.hide();
+	imgHolders.hide();
 
 	frames.on('load', function() {
-		if (this.src) {
-			swap();
+		if (this.src != "") {
+			swapTo(this);
+		}
+	});
+
+	imgHolders.on('load', function() {
+		if (this.src != "") {
+			swapTo(this);
 		}
 	});
 
@@ -18,7 +30,10 @@ $(function() {
 		}
 
 		osd.html(text).parent().show();
-		osd.fitText(0.8);
+
+		if (osd.fitText) {
+			osd.fitText(0.8);
+		}
 
 		osdTimer = setTimeout(function() {
 			osd.parent().fadeOut();
@@ -60,6 +75,8 @@ $(function() {
 
 			if (message.type == "url") {
 				loadURL(message.payload);
+			} else if (message.type == "img") {
+				loadIMG(message.payload);
 			} else if (message.type == "text") {
 				osdText(message.payload);
 			} else if (message.type == "reload") {
@@ -76,26 +93,51 @@ $(function() {
 		conn.send(JSON.stringify({ "type": type, "payload": payload }));
 	};
 
-	function currentFrame() {
-		return $('iframe.current');
-	}
-
 	function nextFrame() {
-		return $('iframe.next');
+		if (currentFrame) {
+			return frames.first();
+		} else {
+			return frames.last();
+		}
 	}
 
-	function swap() {
-		var current = currentFrame();
-		var next = nextFrame();
+	function nextIMGHolder() {
+		if (currentHolder) {
+			return imgHolders.first();
+		} else {
+			return imgHolders.last();
+		}
+	}
 
-		next.removeClass('loading');
-		current.removeClass('current'); current.addClass('next');
-		next.removeClass('next'); next.addClass('current');
+	function swapTo(element) {
+		frames.fadeOut();
+		imgHolders.fadeOut();
+		$(element).fadeIn();
+
+		frames.each(function() {
+			if (this != element) {
+				$(this).removeAttr('src');
+			} else {
+				currentFrame = 1 - currentFrame;
+			}
+		});
+
+		imgHolders.each(function() {
+			if (this != element) {
+				$(this).removeAttr('src');
+			} else {
+				currentHolder = 1 - currentHolder;
+			}
+		});
 	}
 
 	function loadURL(url) {
 		var next = nextFrame();
-		next.addClass('loading');
+		next.attr('src', url);
+	}
+
+	function loadIMG(url) {
+		var next = nextIMGHolder();
 		next.attr('src', url);
 	}
 

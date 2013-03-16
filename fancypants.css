@@ -1,56 +1,71 @@
+* {
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+	overflow: hidden;
+}
 html {
 	height: 100%;
-	overflow: hidden;
 }
 
 body {
-	background: royalblue;
+	background: gainsboro url(285.gif) no-repeat center center;
 	color: snow;
 	font-weight: bold;
 	margin: 0;
 	padding: 0;
 	height: 100%;
-	overflow: hidden;
 }
 
 iframe {
 	position: absolute;
-	background: gainsboro;
-	color: #333;
-	border: 0px solid gold;
 	width: 100%;
 	height: 100%;
 	margin: 0;
-	overflow: hidden;
 }
 
-iframe.current {
-	border-color: gold !important;
-	z-index: 5;
+.imgholder {
+	position: absolute;
+	height: 100%;
+	width: 100%;
+
+	display: -moz-box;
+	-moz-box-orient: horizontal;
+	-moz-box-pack: center;
+	-moz-box-align: center;
+
+	display: -webkit-box;
+	-webkit-box-orient: horizontal;
+	-webkit-box-pack: center;
+	-webkit-box-align: center;
 }
 
-iframe.next {
-	border-color: #cacaca !important;
-	z-index: 3;
-}
+.imgholder > img {
+	display: block;
+	background: white;
+	border: 0.4em solid whitesmoke;
+	padding: 0.4em;
+	min-width: 100px;
+	min-height: 100px;
 
-iframe.loading {
-	border-color: hotpink !important;
-	z-index: 1;
+	max-width: 100%;
+	max-height: 100%;
 }
 
 #osd {
 	position: absolute;
-	top: 0;
-	left: 0;
 	width: 100%;
 	height: 100%;
-	overflow: hidden;
 	text-align: center;
 	vertical-align: middle;
 	margin: 0 auto;
 	z-index: 999;
 	background: rgba(0,0,0,0.6);
+
+	display: -moz-box;
+	-moz-box-orient: horizontal;
+	-moz-box-pack: center;
+	-moz-box-align: center;
 
 	display: -webkit-box;
 	-webkit-box-orient: horizontal;
