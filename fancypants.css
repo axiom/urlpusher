@@ -43,8 +43,6 @@ iframe {
 .imgholder > img {
 	display: block;
 	background: white;
-	border: 0.4em solid whitesmoke;
-	padding: 0.4em;
 	min-width: 100px;
 	min-height: 100px;
 
