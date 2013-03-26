@@ -10,11 +10,17 @@ html {
 
 body {
 	background: gainsboro url(285.gif) no-repeat center center;
-	color: snow;
+	color: #222;
 	font-weight: bold;
 	margin: 0;
 	padding: 0;
 	height: 100%;
+}
+
+body.normal {
+	padding: 1em;
+	margin: 1em auto;
+	width: 40em;
 }
 
 iframe {
@@ -77,4 +83,14 @@ iframe {
 	width: 100%;
 	border-top: 10px solid black;
 	border-bottom: 10px solid black;
+}
+
+#directory {
+	background: royalblue;
+}
+
+#directory div {
+	background: azure;
+	padding: 1em;
+	margin: 1em;
 }

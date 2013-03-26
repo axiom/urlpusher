@@ -29,16 +29,23 @@ const (
 	TYPE_ADD    = "add"
 	TYPE_TEXT   = "text"
 	TYPE_DELETE = "delete"
+	TYPE_LIST   = "list"
+	TYPE_SET    = "set"
+
+	FIELD_URL      = "url"
+	FIELD_DURATION = "duration"
+	FIELD_TYPE     = "type"
 )
 
 type Message struct {
-	Type    Type   `json:"type"`
-	Payload string `json:"payload"`
+	Type    Type        `json:"type"`
+	Payload interface{} `json:"payload,omitempty"`
 }
 
 // An URLEntry represents is used to associate an URL with the duration it
 // should be shown on the screen (i.e. until the next URL will be pushed).
 type URLEntry struct {
+	ID       string        `json:"id"`
 	URL      string        `json:"url"`
 	Type     Type          `json:"type"`
 	Duration time.Duration `json:"duration"`
@@ -233,7 +240,7 @@ func (hub *hub) run() {
 				// Add an URL entry to the directory
 				duration := 3 * time.Second
 				urlEntry := URLEntry{
-					URL:      message.Payload,
+					URL:      message.Payload.(string),
 					Duration: duration,
 				}
 				hub.directory.directory = append(hub.directory.directory, urlEntry)
@@ -242,6 +249,12 @@ func (hub *hub) run() {
 				// Delete an URL entry from the directory
 			case TYPE_TEXT:
 				hub.Broadcast(message)
+			case TYPE_LIST:
+				// Dump the URL directory
+				hub.Broadcast(Message{
+					Type:    TYPE_LIST,
+					Payload: hub.directory.directory,
+				})
 			default:
 				log.Println("Got unknown message type: ", message.Type)
 			}
