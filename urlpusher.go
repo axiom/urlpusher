@@ -262,7 +262,6 @@ func (hub *hub) ReadDirectoryFromFile(filename string) (err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println(directory)
 	hub.directory = directory
 	return
 }
@@ -283,7 +282,7 @@ func (hub *hub) run() {
 	for {
 		select {
 		case minion := <-hub.register:
-			log.Println("Registering minion")
+			log.Println("Registering minion:", minion.websocket.RemoteAddr(), minion.websocket.LocalAddr())
 			hub.Register(minion)
 			if entry, ok := hub.directory.Current(); ok {
 				message := urlEntry2message(entry)
