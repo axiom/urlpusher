@@ -38,22 +38,23 @@ const (
 )
 
 type Message struct {
-	Type    Type        `json:"type"`
-	Payload interface{} `json:"payload,omitempty"`
+	Type    Type
+	Payload interface{}
 }
 
 // An URLEntry represents is used to associate an URL with the duration it
 // should be shown on the screen (i.e. until the next URL will be pushed).
 type URLEntry struct {
-	ID       string        `json:"id"`
-	URL      string        `json:"url"`
-	Type     Type          `json:"type"`
-	Duration time.Duration `json:"duration"`
+	ID       string
+	Name     string
+	URL      string
+	Type     Type
+	Duration time.Duration
 }
 
 // Container used when decoding a JSON file containing a list of URL entries.
 type urlEntries struct {
-	Entries []URLEntry `json:"entries"`
+	Entries []URLEntry
 }
 
 // An URLDirectory holds a list of URLEntries so that the server can push each

@@ -87,10 +87,18 @@ iframe {
 
 #directory {
 	background: royalblue;
+	list-style-type: disc;
+	margin: 0;
+	padding: 0;
 }
 
-#directory div {
-	background: azure;
+#directory li {
+	background: orange;
+	border: 1em solid white;
 	padding: 1em;
 	margin: 1em;
+}
+
+#directory li span, #directory li strong {
+	display: block;
 }

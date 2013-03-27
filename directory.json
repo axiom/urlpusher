@@ -1,34 +1,40 @@
 {
-	"entries": [
+	"Entries": [
 		{
-			"type": "url",
-			"url": "http://status.aws.amazon.com/",
-			"duration": 4000000000
+			"Name": "Amazon AWS status",
+			"Type": "url",
+			"URL": "http://status.aws.amazon.com/",
+			"Duration": 4000000000
 		},
 		{
-			"type": "url",
-			"url": "https://status.github.com/",
-			"duration": 4000000000
+			"Name": "Github status",
+			"Type": "url",
+			"URL": "https://status.github.com/",
+			"Duration": 4000000000
 		},
 		{
-			"type": "img",
-			"url": "http://etsycodeascraft.files.wordpress.com/2010/12/logins3.png?w=500&h=300",
-			"duration": 5100000000
+			"Name": "Example graph 1",
+			"Type": "img",
+			"URL": "http://etsycodeascraft.files.wordpress.com/2010/12/logins3.png?w=500&h=300",
+			"Duration": 5100000000
 		},
 		{
-			"type": "img",
-			"url": "http://etsycodeascraft.files.wordpress.com/2011/02/logins2.png?w=500&h=300",
-			"duration": 5100000000
+			"Name": "Example graph 2",
+			"Type": "img",
+			"URL": "http://etsycodeascraft.files.wordpress.com/2011/02/logins2.png?w=500&h=300",
+			"Duration": 5100000000
 		},
 		{
-			"type": "img",
-			"url": "http://i.stack.imgur.com/Am9kb.png",
-			"duration": 5100000000
+			"Name": "Example graph 3",
+			"Type": "img",
+			"URL": "http://i.stack.imgur.com/Am9kb.png",
+			"Duration": 5100000000
 		},
 		{
-			"type": "img",
-			"url": "http://www.yr.no/place/Sweden/V%C3%A4stra_G%C3%B6taland/Gothenburg/avansert_meteogram.png",
-			"duration": 5000000000
+			"Name": "Local weather",
+			"Type": "img",
+			"URL": "http://www.yr.no/place/Sweden/V%C3%A4stra_G%C3%B6taland/Gothenburg/avansert_meteogram.png",
+			"Duration": 5000000000
 		}
 	]
 }
