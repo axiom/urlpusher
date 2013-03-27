@@ -2,8 +2,8 @@
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
-	overflow: hidden;
 }
+
 html {
 	height: 100%;
 }
@@ -86,19 +86,22 @@ iframe {
 }
 
 #directory {
-	background: royalblue;
-	list-style-type: disc;
+	list-style-type: none;
 	margin: 0;
 	padding: 0;
 }
 
 #directory li {
-	background: orange;
-	border: 1em solid white;
-	padding: 1em;
-	margin: 1em;
+	background: gainsboro;
+	border: 1ex solid white;
+	padding: 1ex;
+	margin: 1ex;
+	cursor: move;
 }
 
-#directory li span, #directory li strong {
+#directory li input {
 	display: block;
+	padding: 2px 4px;
+	width: 100%;
+	border: none;
 }

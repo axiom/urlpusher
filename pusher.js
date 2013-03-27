@@ -73,13 +73,13 @@ $(function() {
 
 			var message = JSON.parse(evt.data);
 
-			if (message.type == "url") {
-				loadURL(message.payload);
-			} else if (message.type == "img") {
-				loadIMG(message.payload);
-			} else if (message.type == "text") {
-				osdText(message.payload);
-			} else if (message.type == "reload") {
+			if (message.Type == "url") {
+				loadURL(message.Payload);
+			} else if (message.Type == "img") {
+				loadIMG(message.Payload);
+			} else if (message.Type == "text") {
+				osdText(message.Payload);
+			} else if (message.Type == "reload") {
 				if (conn) {
 					conn.close();
 				}
@@ -90,7 +90,7 @@ $(function() {
 	}
 
 	sendMessage = function(type, payload) {
-		conn.send(JSON.stringify({ "type": type, "payload": payload }));
+		conn.send(JSON.stringify({"Type": type, "Payload": payload }));
 	};
 
 	function nextFrame() {

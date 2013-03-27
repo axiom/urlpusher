@@ -10,7 +10,9 @@ package main
 
 import (
 	"code.google.com/p/go.net/websocket"
+	"github.com/tux21b/gocql/uuid"
 	"encoding/json"
+	_ "expvar"
 	"flag"
 	"fmt"
 	"io"
@@ -26,7 +28,6 @@ const (
 	TYPE_URL    = "url"
 	TYPE_IMG    = "img"
 	TYPE_RELOAD = "reload"
-	TYPE_ADD    = "add"
 	TYPE_TEXT   = "text"
 	TYPE_DELETE = "delete"
 	TYPE_LIST   = "list"
@@ -45,11 +46,16 @@ type Message struct {
 // An URLEntry represents is used to associate an URL with the duration it
 // should be shown on the screen (i.e. until the next URL will be pushed).
 type URLEntry struct {
-	ID       string
-	Name     string
-	URL      string
-	Type     Type
-	Duration time.Duration
+	ID string
+	Name         string
+	URL          string
+	Type         Type
+	Duration     time.Duration
+	DumbDuration string
+}
+
+func (u URLEntry) Ok() bool {
+	return u.URL != "" && u.Type != ""
 }
 
 // Container used when decoding a JSON file containing a list of URL entries.
@@ -60,7 +66,8 @@ type urlEntries struct {
 // An URLDirectory holds a list of URLEntries so that the server can push each
 // URL in it out to clients in a timely manner.
 type URLDirectory struct {
-	directory []URLEntry
+	directory map[string]URLEntry
+	ordering  []string
 	current   int
 }
 
@@ -69,18 +76,53 @@ func (d URLDirectory) Current() (URLEntry, bool) {
 		return URLEntry{}, false
 	}
 
-	return d.directory[d.current], true
+	return d.directory[d.ordering[d.current]], true
 }
 
-func (d *URLDirectory) Next() (URLEntry, bool) {
-	if len(d.directory) == 0 {
-		return URLEntry{}, false
+func (d *URLDirectory) Next() (entry URLEntry, ok bool) {
+	if len(d.ordering) == 0 {
+		ok = false
+		return
 	}
 
 	// Advance the current index
-	d.current = (d.current + 1) % len(d.directory)
+	d.current = (d.current + 1) % len(d.ordering)
 
-	return d.directory[d.current], true
+	entry, ok = d.directory[d.ordering[d.current]]
+	if ok != true {
+		return
+	}
+
+	if entry.Ok() != true {
+		ok = false
+		return
+	}
+
+	return
+}
+
+// Get a slice of sorted URLEntries from the directory
+func (d URLDirectory) Entries() (entries []URLEntry) {
+	for _, id := range d.ordering {
+		entry := d.directory[id]
+		entry.DumbDuration = entry.Duration.String()
+		entries = append(entries, entry)
+	}
+	return
+}
+
+// Delete an entry with the given id if it exist
+func (d *URLDirectory) Delete(id string) {
+	if _, ok := d.directory[id]; ok {
+		delete(d.directory, id)
+		for i, orderId := range d.ordering {
+			if orderId == id {
+				ordering := d.ordering[0:i]
+				d.ordering = append(ordering, d.ordering[i+1:len(d.ordering)]...)
+				break
+			}
+		}
+	}
 }
 
 // Create an URL directory by reading JSON from the provided reader.
@@ -94,9 +136,17 @@ func ReadDirectory(r io.Reader) (URLDirectory, error) {
 		log.Fatal("Could not decode entries in dictionary file", err)
 	}
 
-	return URLDirectory{
-		directory: entries.Entries,
-	}, nil
+	directory := URLDirectory{
+		ordering:  make([]string, len(entries.Entries), len(entries.Entries)),
+		directory: make(map[string]URLEntry, len(entries.Entries)),
+	}
+
+	for i, entry := range entries.Entries {
+		directory.ordering[i] = entry.ID
+		directory.directory[entry.ID] = entry
+	}
+
+	return directory, nil
 }
 
 func urlEntry2message(entry URLEntry) Message {
@@ -159,6 +209,7 @@ func (h *hub) Register(minion *Minion) {
 				log.Println("Got bad incoming websocket message", err)
 				break
 			}
+
 			h.incoming <- message
 		}
 	}(h, minion)
@@ -195,7 +246,7 @@ func (hub *hub) ReadDirectoryFromFile(filename string) (err error) {
 	}
 	directory, err := ReadDirectory(file)
 	if err != nil {
-		return
+		log.Fatal(err)
 	}
 	log.Println(directory)
 	hub.directory = directory
@@ -224,38 +275,100 @@ func (hub *hub) run() {
 				message := urlEntry2message(entry)
 				minion.Send(message)
 			}
+
 		case minion := <-hub.unregister:
 			log.Println("Unregistering minion")
 			hub.Unregister(minion)
+
 		case message := <-hub.broadcast:
 			log.Println("->", message)
 			hub.Broadcast(message)
+
 		case message := <-hub.incoming:
 			log.Println("<-", message)
+
 			switch message.Type {
 			case TYPE_RELOAD:
 				hub.ReadDirectoryFromFile(*directoryFile)
 				hub.Broadcast(Message{Type: TYPE_TEXT, Payload: "reloading"})
 				hub.Broadcast(Message{Type: TYPE_RELOAD})
-			case TYPE_ADD:
-				// Add an URL entry to the directory
-				duration := 3 * time.Second
-				urlEntry := URLEntry{
-					URL:      message.Payload.(string),
-					Duration: duration,
-				}
-				hub.directory.directory = append(hub.directory.directory, urlEntry)
-				log.Println("Adding URL to directory:", urlEntry)
-			case TYPE_DELETE:
-				// Delete an URL entry from the directory
+
 			case TYPE_TEXT:
 				hub.Broadcast(message)
+
 			case TYPE_LIST:
 				// Dump the URL directory
 				hub.Broadcast(Message{
 					Type:    TYPE_LIST,
-					Payload: hub.directory.directory,
+					Payload: hub.directory.Entries(),
 				})
+
+			case TYPE_DELETE:
+				// Delete an URL entry from the directory. Payload should be the id
+				// of the entry.
+				hub.directory.Delete(message.Payload.(string))
+				hub.Broadcast(Message{
+					Type:    TYPE_LIST,
+					Payload: hub.directory.Entries(),
+				})
+
+			case TYPE_SET:
+				// To some jugling to get an URLEntry instead
+				// of generic []interface{}.
+				payload, err := json.Marshal(message.Payload)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				var entry URLEntry
+				if err = json.Unmarshal(payload, &entry); err != nil {
+					log.Println("Could not parse URLEntry from payload", err)
+				}
+
+				// Make sure there always is a name for an entry, even a nonsensical
+				// one.
+				if entry.ID == "" {
+					entry.ID = uuid.RandomUUID().String()
+				}
+
+				// Get the entry that we will update.
+				directoryEntry, knownEntry := hub.directory.directory[entry.ID]
+				if knownEntry == false {
+					directoryEntry = entry
+				}
+
+				if entry.DumbDuration != "" {
+					if duration, err := time.ParseDuration(entry.DumbDuration); err == nil {
+						directoryEntry.Duration = duration
+					} else {
+						log.Printf("Could not parse duration %v. %v", entry.DumbDuration, err)
+					}
+				}
+
+				if entry.Name != "" {
+					directoryEntry.Name = entry.Name
+				}
+
+				if entry.URL != "" {
+					directoryEntry.URL = entry.URL
+				}
+
+				if entry.Type != "" {
+					directoryEntry.Type = entry.Type
+				}
+
+				hub.directory.directory[entry.ID] = directoryEntry
+
+				if knownEntry == false {
+					hub.directory.ordering = append(hub.directory.ordering, directoryEntry.ID)
+				}
+
+				log.Printf("%+v", directoryEntry)
+				hub.Broadcast(Message{
+					Type:    TYPE_LIST,
+					Payload: hub.directory.Entries(),
+				})
+
 			default:
 				log.Println("Got unknown message type: ", message.Type)
 			}
@@ -270,6 +383,8 @@ func (hub *hub) run() {
 
 				ticker.Stop()
 				ticker = time.NewTicker(entry.Duration)
+			} else {
+				log.Println("Skipped over non-ok entry")
 			}
 		}
 	}
