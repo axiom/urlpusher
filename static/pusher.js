@@ -8,9 +8,9 @@ $(function() {
 	var osd = $('#osd > div');
 	var osdTimer;
 
-	osd.parent().hide();
-	frames.hide();
-	imgHolders.hide();
+	osd.parent().css({opacity: 0.0});
+	frames.css({opacity: 0.0});
+	imgHolders.css({opacity: 0.0});
 
 	frames.on('load', function() {
 		if (this.src != "") {
@@ -30,13 +30,12 @@ $(function() {
 		}
 
 		osd.html(text).parent().show();
-
-		if (osd.fitText) {
-			osd.fitText(0.8);
-		}
+		osd.parent().animate({opacity: 1.0}, 120);
 
 		osdTimer = setTimeout(function() {
-			osd.parent().fadeOut();
+			osd.parent().animate({
+				opacity: 0.0
+			}, 500);
 		}, delay || 5000);
 	}
 
@@ -110,9 +109,9 @@ $(function() {
 	}
 
 	function swapTo(element) {
-		frames.fadeOut();
-		imgHolders.fadeOut();
-		$(element).fadeIn();
+		frames.animate({opacity: 0.0}, 250);
+		imgHolders.animate({opacity: 0.0}, 250);
+		$(element).animate({opacity: 1.0}, 250);
 
 		frames.each(function() {
 			if (this != element) {

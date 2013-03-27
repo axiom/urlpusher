@@ -20,7 +20,6 @@ body {
 body.normal {
 	padding: 1em;
 	margin: 1em auto;
-	width: 40em;
 }
 
 iframe {
@@ -92,16 +91,33 @@ iframe {
 }
 
 #directory li {
-	background: gainsboro;
-	border: 1ex solid white;
+	border: 1ex solid #cacaca;
 	padding: 1ex;
 	margin: 1ex;
-	cursor: move;
+	border-radius: 10px;
 }
 
-#directory li input {
-	display: block;
+#directory li label {
+	display: inline-block;
+	text-align: right;
+	width: 30%;
+	font-weight: normal;
+}
+
+#directory li input, #directory li select {
+	display: inline-block;
 	padding: 2px 4px;
-	width: 100%;
-	border: none;
+	width: 69%;
+	border-radius: 3px;
+}
+
+#directory li input[type=button], #directory li input[type=submit] {
+	margin: 0.5em;
+	padding: 0.3em;
+	font-size: 18px;
+	font-weight: bold;
+}
+
+#directory li input.half {
+	width: 47%;
 }

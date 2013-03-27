@@ -10,11 +10,11 @@ package main
 
 import (
 	"code.google.com/p/go.net/websocket"
-	"github.com/tux21b/gocql/uuid"
 	"encoding/json"
 	_ "expvar"
 	"flag"
 	"fmt"
+	"github.com/tux21b/gocql/uuid"
 	"io"
 	"log"
 	"net/http"
@@ -39,14 +39,19 @@ const (
 )
 
 type Message struct {
-	Type    Type
-	Payload interface{}
+	Type         Type
+	Payload      interface{}
+	responseChan chan Message
+}
+
+func (m Message) Respond(message Message) {
+	m.responseChan <- message
 }
 
 // An URLEntry represents is used to associate an URL with the duration it
 // should be shown on the screen (i.e. until the next URL will be pushed).
 type URLEntry struct {
-	ID string
+	ID           string
 	Name         string
 	URL          string
 	Type         Type
@@ -123,6 +128,14 @@ func (d *URLDirectory) Delete(id string) {
 			}
 		}
 	}
+}
+
+func (d *URLDirectory) AddOrUpdate(entry URLEntry) {
+	if _, knownEntry := d.directory[entry.ID]; knownEntry == false {
+		// Add it to the end
+		d.ordering = append(d.ordering, entry.ID)
+	}
+	d.directory[entry.ID] = entry
 }
 
 // Create an URL directory by reading JSON from the provided reader.
@@ -210,6 +223,7 @@ func (h *hub) Register(minion *Minion) {
 				break
 			}
 
+			message.responseChan = minion.outgoing
 			h.incoming <- message
 		}
 	}(h, minion)
@@ -298,7 +312,7 @@ func (hub *hub) run() {
 
 			case TYPE_LIST:
 				// Dump the URL directory
-				hub.Broadcast(Message{
+				message.Respond(Message{
 					Type:    TYPE_LIST,
 					Payload: hub.directory.Entries(),
 				})
@@ -307,7 +321,7 @@ func (hub *hub) run() {
 				// Delete an URL entry from the directory. Payload should be the id
 				// of the entry.
 				hub.directory.Delete(message.Payload.(string))
-				hub.Broadcast(Message{
+				message.Respond(Message{
 					Type:    TYPE_LIST,
 					Payload: hub.directory.Entries(),
 				})
@@ -357,14 +371,10 @@ func (hub *hub) run() {
 					directoryEntry.Type = entry.Type
 				}
 
-				hub.directory.directory[entry.ID] = directoryEntry
-
-				if knownEntry == false {
-					hub.directory.ordering = append(hub.directory.ordering, directoryEntry.ID)
-				}
+				hub.directory.AddOrUpdate(directoryEntry)
 
 				log.Printf("%+v", directoryEntry)
-				hub.Broadcast(Message{
+				message.Respond(Message{
 					Type:    TYPE_LIST,
 					Payload: hub.directory.Entries(),
 				})
@@ -424,7 +434,13 @@ func main() {
 	}(hubert)
 
 	http.Handle("/pusher", websocket.Handler(pusherHandle))
-	http.Handle("/", http.FileServer(http.Dir(".")))
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/pusher.html")
+	})
+	http.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/lister.html")
+	})
+	http.Handle("/static/", http.FileServer(http.Dir(".")))
 
 	log.Printf("Listening on %v:%v\n", *host, *port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("%v:%v", *host, *port), nil))

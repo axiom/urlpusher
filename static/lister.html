@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Directory of URLPusher</title>
+		<link rel="stylesheet" type="text/css" href="static/fancypants.css"/>
+	</head>
+	<body class="normal">
+		<h1>Directory</h1>
+		<input type="button" class="create" value="Add new">
+		<ul id="directory"></ul>
+
+		<script id="entry" type="text/html">
+			<li id="{{ ID }}">
+				<input value="{{ ID }}" name="id" type="hidden">
+
+				<label for="name-{{ ID }}">Name</label>
+				<input value="{{ Name }}" id="name-{{ ID }}" name="name" placeholder="Name">
+
+				<label for="type-{{ ID }}">Type</label>
+				<select value="{{ Type }}" id="type-{{ ID }}" name="type">
+					<option {{#isURLType}} selected="selected"{{/isURLType}} value="url" label="URL">URL</label>
+				<option {{#isImgType}} selected="selected"{{/isImgType}} value="img" label="Image">Image</label>
+				</select>
+
+				<label for="url-{{ ID }}">Address</label>
+				<input value="{{ URL }}" type="url" id="url-{{ ID }}" name="url" placeholder="URL">
+
+				<label for="duration-{{ ID }}" title="E.g. 5s for five seconds and 10m for 10 minutes">Duration</label>
+				<input value="{{ DumbDuration }}" id="duration-{{ ID }}" name="duration" placeholder="Duration">
+
+				<input type="submit" value="Update" class="update half">
+				<input type="button" value="Destroy" class="destroy half">
+			</li>
+		</script>
+		<script type="application/javascript" src="//cdnjs.cloudflare.com/ajax/libs/zepto/1.0/zepto.min.js"></script>
+		<script type="application/javascript" src="//cdnjs.cloudflare.com/ajax/libs/ICanHaz.js/0.10/ICanHaz.min.js"></script>
+		<script type="application/javascript" src="static/lister.js"></script>
+	</body>
+</html>
