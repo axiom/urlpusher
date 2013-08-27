@@ -180,7 +180,7 @@ func (h hub) Broadcast(m Message) {
 }
 
 func (hub *hub) ReadDirectoryFromFile(filename string) (err error) {
-	file, err := os.Open("directory.json")
+	file, err := os.Open(filename)
 	if err != nil {
 		log.Println("Could not open directory file for reading")
 		return
@@ -283,6 +283,7 @@ var (
 	port          = flag.Int("port", 8012, "Port to listen on")
 	host          = flag.String("host", "0.0.0.0", "Host to bind to")
 	directoryFile = flag.String("directory", "directory.json", "File to read URL entries from")
+	httpDir       = flag.String("httpdir", ".", "Directory to serve static files from")
 )
 
 func main() {
@@ -295,7 +296,7 @@ func main() {
 	}(hubert)
 
 	http.Handle("/pusher", websocket.Handler(pusherHandle))
-	http.Handle("/", http.FileServer(http.Dir(".")))
+	http.Handle("/", http.FileServer(http.Dir(*httpDir)))
 
 	log.Printf("Listening on %v:%v\n", *host, *port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("%v:%v", *host, *port), nil))
